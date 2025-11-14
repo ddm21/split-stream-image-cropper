@@ -4,10 +4,8 @@
   "description": "API server for the SplitStream Image Cropper",
   "main": "server.js",
   "scripts": {
-    "build": "tailwindcss -i ./input.css -o ./output.css && esbuild index.tsx --bundle --outfile=bundle.js --jsx=automatic --format=esm --external:react --external:react/jsx-runtime --external:react-dom/client --external:jszip --external:lucide-react && npm run move-to-public",
-    "move-to-public": "mkdir -p public && cp bundle.js public/bundle.js && cp output.css public/output.css && cp index.html public/index.html",
+    "build": "tailwindcss -i ./input.css -o ./output.css && esbuild index.tsx --bundle --outfile=bundle.js --jsx=automatic --format=esm --external:react --external:react/jsx-runtime --external:react-dom/client --external:jszip --external:lucide-react",
     "start": "npm run build && node server.js",
-    "dev": "node server.js",
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "keywords": [
