@@ -1,0 +1,29 @@
+{
+  "buildCommand": "npm run build",
+  "installCommand": "npm install",
+  "public": true,
+  "functions": {
+    "api/handler.js": {
+      "maxDuration": 60,
+      "memory": 1024
+    }
+  },
+  "rewrites": [
+    {
+      "source": "/api/(.*)",
+      "destination": "/api/handler"
+    },
+    {
+      "source": "/bundle.js",
+      "destination": "/bundle.js"
+    },
+    {
+      "source": "/output.css",
+      "destination": "/output.css"
+    },
+    {
+      "source": "/(.*)",
+      "destination": "/index.html"
+    }
+  ]
+}

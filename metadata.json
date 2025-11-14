@@ -1,0 +1,5 @@
+{
+  "name": "SplitStream Image Cropper",
+  "description": "A high-performance client-side system to split large images into vertical chunks based on pixel height.",
+  "requestFramePermissions": []
+}

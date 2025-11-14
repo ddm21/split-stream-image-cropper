@@ -1,0 +1,34 @@
+{
+  "name": "splitstream-backend",
+  "version": "1.0.0",
+  "description": "API server for the SplitStream Image Cropper",
+  "main": "server.js",
+  "scripts": {
+    "build": "tailwindcss -i ./input.css -o ./output.css && esbuild index.tsx --bundle --outfile=bundle.js --jsx=automatic --format=esm --external:react --external:react/jsx-runtime --external:react-dom/client --external:jszip --external:lucide-react",
+    "start": "npm run build && node server.js",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "image",
+    "processing",
+    "api",
+    "split",
+    "chunk"
+  ],
+  "author": "SplitStream",
+  "license": "MIT",
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "jimp": "^0.22.12",
+    "node-fetch": "^2.7.0"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^5.1.1",
+    "autoprefixer": "^10.4.19",
+    "esbuild": "^0.21.4",
+    "postcss": "^8.4.38",
+    "tailwindcss": "^3.4.3"
+  }
+}
