@@ -1,6 +1,7 @@
 {
   "buildCommand": "npm run build",
   "installCommand": "npm install",
+  "outputDirectory": "public",
   "public": true,
   "functions": {
     "api/handler.js": {
@@ -12,18 +13,26 @@
     {
       "source": "/api/(.*)",
       "destination": "/api/handler"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/output.css",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     },
     {
       "source": "/bundle.js",
-      "destination": "/bundle.js"
-    },
-    {
-      "source": "/output.css",
-      "destination": "/output.css"
-    },
-    {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "public, max-age=31536000, immutable"
+        }
+      ]
     }
   ]
 }

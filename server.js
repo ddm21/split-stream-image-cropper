@@ -242,8 +242,9 @@ app.post('/api/v1/process', apiKeyAuth, async (req, res) => {
 });
 
 // --- Static Frontend Serving ---
-// Serve static files (bundle.js, output.css, etc.) from the root directory
-app.use(express.static(path.join(__dirname), {
+// Serve static files (bundle.js, output.css, etc.) from the public directory
+const publicDir = path.join(__dirname, 'public');
+app.use(express.static(publicDir, {
   maxAge: '1d',
   etag: true,
   lastModified: true
@@ -251,7 +252,7 @@ app.use(express.static(path.join(__dirname), {
 
 // Serve bundle.js and output.css explicitly to ensure they're accessible
 app.get('/bundle.js', (req, res, next) => {
-  const filePath = path.join(__dirname, 'bundle.js');
+  const filePath = path.join(publicDir, 'bundle.js');
   res.sendFile(filePath, {
     headers: {
       'Content-Type': 'application/javascript'
@@ -265,7 +266,7 @@ app.get('/bundle.js', (req, res, next) => {
 });
 
 app.get('/output.css', (req, res, next) => {
-  const filePath = path.join(__dirname, 'output.css');
+  const filePath = path.join(publicDir, 'output.css');
   res.sendFile(filePath, {
     headers: {
       'Content-Type': 'text/css'
@@ -285,7 +286,7 @@ app.get('*', (req, res) => {
   if (req.path.startsWith('/api/')) {
     return res.status(404).json({ error: 'Not found' });
   }
-  res.sendFile(path.join(__dirname, 'index.html'));
+  res.sendFile(path.join(publicDir, 'index.html'));
 });
 
 
