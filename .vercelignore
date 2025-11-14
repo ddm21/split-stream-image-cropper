@@ -6,11 +6,12 @@
 # Source files (should be built by vercel)
 *.tsx
 *.ts
+input.css
 
-# Build tools and configs (these are needed for build)
-# tailwind.config.js - KEEP (needed by build)
-# postcss.config.js - KEEP (needed by build)
+# Build tools and configs
+tailwind.config.js
 tsconfig.json
+postcss.config.js
 vite.config.ts
 
 # Development files
