@@ -2,12 +2,6 @@
   "buildCommand": "npm run build",
   "installCommand": "npm install",
   "public": true,
-  "env": {
-    "API_KEY": "@api_key",
-    "RATE_LIMIT_PER_MINUTE": "@rate_limit_per_minute",
-    "UPSTASH_REDIS_REST_URL": "@upstash_redis_rest_url",
-    "UPSTASH_REDIS_REST_TOKEN": "@upstash_redis_rest_token"
-  },
   "functions": {
     "api/handler.js": {
       "maxDuration": 60,
