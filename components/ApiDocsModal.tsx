@@ -52,7 +52,7 @@ export const ApiDocsModal: React.FC<ApiDocsModalProps> = ({ isOpen, onClose }) =
               <h3>🚀 Quick Start - Try it Now!</h3>
             </div>
             <p className="text-amber-800 dark:text-amber-200 text-sm">
-              Use these credentials to test the API immediately. Rate limit: <strong>10 requests/minute</strong> (Fair use only).
+              Use these credentials to test the API immediately. Rate limit: <strong>10 requests/hour per IP</strong> (Fair use only).
             </p>
             <div className="space-y-2 text-sm font-mono">
               <div><span className="text-amber-700 dark:text-amber-300">Domain:</span> <span className="text-amber-900 dark:text-amber-100">https://split-stream-image-cropper.vercel.app</span></div>

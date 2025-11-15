@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { splitImageApi } = require('./api/imageProcessor.js');
+const { rateLimiter } = require('./api/rateLimiter.js');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -27,7 +28,7 @@ app.use(cors({
   origin: function(origin, callback) {
     // Allow requests with no origin (like mobile apps or curl requests)
     // Also allow same-origin requests
-    if (!origin || origin === process.env.VERCEL_URL || origin === 'http://localhost:3001') {
+    if (!origin || origin === 'http://localhost:3001' || (process.env.VERCEL_URL && origin === `https://${process.env.VERCEL_URL}`)) {
       callback(null, true);
     } else {
       // For Vercel, allow vercel deployment URL
@@ -44,54 +45,6 @@ app.use(cors({
 
 // Parse JSON bodies (as sent by API clients)
 app.use(express.json({ limit: '10mb' }));
-
-// Rate limiter - note: in-memory on serverless doesn't persist between requests
-// Use the safer approach: check client IP header for X-Forwarded-For (Vercel provides this)
-const rateLimitMap = new Map();
-const RATE_LIMIT_WINDOW = 60 * 1000; // 1 minute
-// Configurable rate limit from environment variable, default to 10 if not set
-const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_PER_MINUTE, 10) || 10;
-
-const rateLimiter = (req, res, next) => {
-  // Use X-Forwarded-For header for Vercel (true client IP)
-  const ip = req.headers['x-forwarded-for'] || req.ip || req.connection.remoteAddress || 'unknown';
-  const now = Date.now();
-  
-  if (!rateLimitMap.has(ip)) {
-    rateLimitMap.set(ip, { count: 1, resetTime: now + RATE_LIMIT_WINDOW });
-    return next();
-  }
-  
-  const limit = rateLimitMap.get(ip);
-  
-  // Reset if window expired
-  if (now > limit.resetTime) {
-    limit.count = 1;
-    limit.resetTime = now + RATE_LIMIT_WINDOW;
-    return next();
-  }
-  
-  // Check if limit exceeded
-  if (limit.count >= RATE_LIMIT_MAX_REQUESTS) {
-    return res.status(429).json({ 
-      error: 'Too many requests. Please try again later.',
-      retryAfter: Math.ceil((limit.resetTime - now) / 1000)
-    });
-  }
-  
-  limit.count++;
-  next();
-};
-
-// Clean up old entries periodically (every 5 minutes)
-setInterval(() => {
-  const now = Date.now();
-  for (const [ip, limit] of rateLimitMap.entries()) {
-    if (now > limit.resetTime) {
-      rateLimitMap.delete(ip);
-    }
-  }
-}, 5 * 60 * 1000);
 
 // API Key Authentication Middleware
 const apiKeyAuth = (req, res, next) => {
@@ -112,8 +65,8 @@ const apiKeyAuth = (req, res, next) => {
 // --- API Routes ---
 
 // Health check endpoint - must be before other routes
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ 
+app.get('/api/health', rateLimiter, (req, res) => {
+  res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
     apiKeyConfigured: !!process.env.API_KEY
@@ -292,14 +245,12 @@ app.get('*', (req, res) => {
 // --- Server Startup ---
 // For local development
 if (require.main === module) {
-  const app = require('./api/index.js');
-  const PORT = process.env.PORT || 3001;
   app.listen(PORT, () => {
     console.log(`SplitStream server with UI and API listening on http://localhost:${PORT}`);
-    const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_PER_MINUTE, 10) || 10;
-    console.log(`Rate limit: ${RATE_LIMIT_MAX_REQUESTS} requests per minute per IP`);
+    const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_PER_HOUR, 10) || 10;
+    console.log(`Rate limit: ${RATE_LIMIT_MAX_REQUESTS} requests per hour per IP`);
   });
 }
 
-// Export for backward compatibility
-module.exports = require('./api/index.js');
+// Export for Vercel and other use cases
+module.exports = app;

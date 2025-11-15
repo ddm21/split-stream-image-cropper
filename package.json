@@ -6,7 +6,9 @@
   "scripts": {
     "build": "tailwindcss -i ./input.css -o ./output.css && esbuild index.tsx --bundle --outfile=bundle.js --jsx=automatic --format=esm --external:react --external:react/jsx-runtime --external:react-dom/client --external:jszip --external:lucide-react",
     "start": "npm run build && node server.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "vitest",
+    "test:run": "vitest run",
+    "test:ui": "vitest --ui"
   },
   "keywords": [
     "image",
@@ -18,6 +20,7 @@
   "author": "SplitStream",
   "license": "MIT",
   "dependencies": {
+    "@upstash/redis": "^1.28.4",
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
@@ -26,9 +29,12 @@
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^5.1.1",
+    "@vitest/ui": "^1.1.0",
     "autoprefixer": "^10.4.19",
     "esbuild": "^0.21.4",
     "postcss": "^8.4.38",
-    "tailwindcss": "^3.4.3"
+    "supertest": "^6.3.3",
+    "tailwindcss": "^3.4.3",
+    "vitest": "^1.1.0"
   }
 }

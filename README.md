@@ -37,18 +37,56 @@ This project includes a unified server that runs both the frontend UI and the ba
 3. **Configure environment variables**:
    - Create a new file named `.env` in the root of the project.
    - Set a secure `API_KEY` (required for `/api/v1/process` endpoint).
-   - Optionally set `RATE_LIMIT_PER_MINUTE` to control rate limiting (default: 10).
+   - Set `RATE_LIMIT_PER_HOUR` to control rate limiting (default: 10).
+   - **(Optional but recommended)** Set up Upstash Redis for distributed rate limiting (required for Vercel/multi-instance deployments).
+
+   **Basic configuration (localhost only):**
    ```env
    # .env file
    API_KEY="your-secret-api-key-here"
-   RATE_LIMIT_PER_MINUTE=20  # Optional: Number of requests per minute per IP (default: 10)
+   RATE_LIMIT_PER_HOUR=10  # Number of requests per hour per IP (default: 10)
    ```
+
+   **For production/self-hosted with Upstash Redis (recommended):**
+   ```env
+   # Core Configuration
+   API_KEY="your-secret-api-key-here"
+   RATE_LIMIT_PER_HOUR=10
+
+   # Upstash Redis Configuration (for distributed rate limiting)
+   UPSTASH_REDIS_REST_URL="https://your-upstash-url.upstash.io"
+   UPSTASH_REDIS_REST_TOKEN="your-upstash-token"
+   ```
+
+   **Setting up Upstash Redis:**
+   1. Create a free account at [Upstash Console](https://console.upstash.com)
+   2. Click "Create Database"
+   3. Choose:
+      - **Name**: `splitstream-ratelimit` (or your choice)
+      - **Region**: Select the region closest to your deployment
+      - **Type**: Standard
+   4. Click "Create"
+   5. After creation, go to your database
+   6. Copy these credentials from the "REST API" section:
+      - `UPSTASH_REDIS_REST_URL` - The REST endpoint URL
+      - `UPSTASH_REDIS_REST_TOKEN` - The API token
+   7. Add them to your `.env` file
+
+   **Why Upstash Redis?**
+   - **Localhost**: Rate limiting works fine with in-memory storage
+   - **Vercel/Serverless**: Each function invocation has fresh memory, so rate limits reset. Redis persists across invocations.
+   - **Multi-instance**: If running multiple server instances, Redis keeps rate limits synchronized
 
 4. **Start the server**:
    ```bash
    npm start
    ```
    The application will be available at `http://localhost:3001`. The same server also hosts the API endpoints.
+
+   The server will automatically:
+   - Use Upstash Redis if credentials are configured
+   - Fall back to in-memory rate limiting if Redis is not available
+   - Log which mode is being used on startup
 
 ## 🌐 Image URL Support
 
@@ -135,6 +173,45 @@ The API returns a JSON object containing metadata and an array of chunks, with e
   ]
 }
 ```
+
+## 🔒 Rate Limiting
+
+The API includes built-in rate limiting to prevent abuse. Rate limits are **per IP address** and configured to **10 requests per hour** by default.
+
+### How It Works
+
+- **Localhost**: Uses in-memory rate limiting (no external dependencies)
+- **Production/Vercel**: Uses Upstash Redis for distributed rate limiting across multiple invocations
+- **Response**: Returns HTTP 429 (Too Many Requests) when limit is exceeded with a `Retry-After` header
+
+### Rate Limit Headers
+
+All API responses include rate limit information:
+```
+X-RateLimit-Limit: 10
+X-RateLimit-Remaining: 9
+X-RateLimit-Reset: 1763210091
+```
+
+When rate limited (HTTP 429):
+```
+Retry-After: 3600
+```
+
+### Configuration
+
+To change the rate limit, set the `RATE_LIMIT_PER_HOUR` environment variable:
+```env
+RATE_LIMIT_PER_HOUR=50  # Allow 50 requests per hour per IP
+```
+
+### For More Details
+
+See [RATE_LIMITING.md](./RATE_LIMITING.md) for comprehensive documentation on:
+- Setting up Upstash Redis
+- Testing rate limiting
+- Understanding serverless rate limiting challenges
+- Troubleshooting common issues
 
 ## 🤝 Contributing
 
