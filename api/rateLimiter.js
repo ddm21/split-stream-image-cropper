@@ -132,7 +132,7 @@ async function checkRedisRateLimit(clientIP) {
 
     // If this is the first request in this window, set TTL
     if (count === 1) {
-      await redisClient.expire(redisKey, 60); // 60 second TTL
+      await redisClient.expire(redisKey, 3600); // 1 Hrs TTL
     }
 
     const remaining = Math.max(0, RATE_LIMIT_MAX_REQUESTS - count);
