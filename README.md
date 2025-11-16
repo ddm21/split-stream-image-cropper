@@ -37,21 +37,31 @@ This project includes a unified server that runs both the frontend UI and the ba
 3. **Configure environment variables**:
    - Create a new file named `.env` in the root of the project.
    - Set a secure `API_KEY` (required for `/api/v1/process` endpoint).
-   - Set `RATE_LIMIT_PER_HOUR` to control rate limiting (default: 10).
+   - Configure rate limiting (separate limits for image processing and health checks).
    - **(Optional but recommended)** Set up Upstash Redis for distributed rate limiting (required for Vercel/multi-instance deployments).
 
    **Basic configuration (localhost only):**
    ```env
    # .env file
    API_KEY="your-secret-api-key-here"
-   RATE_LIMIT_PER_HOUR=10  # Number of requests per hour per IP (default: 10)
+
+   # Rate Limiting - Image Processing (UI and API endpoints)
+   RATE_LIMIT_PER_HOUR=10  # Requests per hour per IP for /api/ui/process and /api/v1/process (default: 10)
+
+   # Rate Limiting - Health Check (health check endpoint only)
+   HEALTH_CHECK_RATE_LIMIT_PER_HOUR=100  # Requests per hour per IP for /api/health (default: 100)
    ```
 
    **For production/self-hosted with Upstash Redis (recommended):**
    ```env
    # Core Configuration
    API_KEY="your-secret-api-key-here"
+
+   # Rate Limiting - Processing Endpoints (UI + API share this limit)
    RATE_LIMIT_PER_HOUR=10
+
+   # Rate Limiting - Health Check (separate generous limit for status checks)
+   HEALTH_CHECK_RATE_LIMIT_PER_HOUR=100
 
    # Upstash Redis Configuration (for distributed rate limiting)
    UPSTASH_REDIS_REST_URL="https://your-upstash-url.upstash.io"
@@ -176,13 +186,29 @@ The API returns a JSON object containing metadata and an array of chunks, with e
 
 ## 🔒 Rate Limiting
 
-The API includes built-in rate limiting to prevent abuse. Rate limits are **per IP address** and configured to **10 requests per hour** by default.
+The application includes a sophisticated **dual-mode rate limiting system** to protect the API from abuse while maintaining good user experience.
+
+### Two Independent Rate Limiters
+
+1. **Processing Rate Limiter** (10 requests/hour per IP, default)
+   - Applies to: `/api/ui/process` (UI) and `/api/v1/process` (API)
+   - **Both endpoints share the same quota** - prevents abuse from either UI or API
+   - Triggers when actual image processing occurs
+   - Tracks via Redis key: `ratelimit:processing:IP`
+
+2. **Health Check Rate Limiter** (100 requests/hour per IP, default)
+   - Applies to: `/api/health` endpoint only
+   - Separate, generous limit for status checks
+   - Allows frequent page refreshes without consuming processing quota
+   - Optimized: Only called once per browser session (subsequent refreshes use sessionStorage cache)
+   - Tracks via Redis key: `ratelimit:health:IP`
 
 ### How It Works
 
 - **Localhost**: Uses in-memory rate limiting (no external dependencies)
 - **Production/Vercel**: Uses Upstash Redis for distributed rate limiting across multiple invocations
 - **Response**: Returns HTTP 429 (Too Many Requests) when limit is exceeded with a `Retry-After` header
+- **IP Detection**: Properly extracts client IP from `X-Forwarded-For` headers (supports proxies and Vercel)
 
 ### Rate Limit Headers
 
@@ -200,18 +226,23 @@ Retry-After: 3600
 
 ### Configuration
 
-To change the rate limit, set the `RATE_LIMIT_PER_HOUR` environment variable:
+Configure rate limits via environment variables:
 ```env
-RATE_LIMIT_PER_HOUR=50  # Allow 50 requests per hour per IP
+# Image processing endpoints (UI + API share this)
+RATE_LIMIT_PER_HOUR=10  # Requests per hour for /api/ui/process and /api/v1/process
+
+# Health check endpoint (separate counter)
+HEALTH_CHECK_RATE_LIMIT_PER_HOUR=100  # Requests per hour for /api/health
 ```
 
 ### For More Details
 
-See [RATE_LIMITING.md](./RATE_LIMITING.md) for comprehensive documentation on:
-- Setting up Upstash Redis
-- Testing rate limiting
-- Understanding serverless rate limiting challenges
+See [RATE_LIMITING.md](./helper-md/RATE_LIMITING.md) for comprehensive documentation on:
+- Architecture and design decisions
+- Testing rate limiting with Postman/n8n
+- Understanding how Redis keys are structured
 - Troubleshooting common issues
+- Monitoring rate limit status
 
 ## 🤝 Contributing
 

@@ -19,10 +19,23 @@ const App: React.FC = () => {
   useEffect(() => {
     const checkBackendStatus = async () => {
       try {
+        // Check if we already performed health check this session
+        const healthCheckKey = 'splitstream_health_checked';
+        const hasCheckedThisSession = sessionStorage.getItem(healthCheckKey);
+
+        if (hasCheckedThisSession) {
+          // Use cached result - backend was online when we last checked
+          setBackendStatus('online');
+          return;
+        }
+
+        // Only perform health check if not already done this session
         const response = await fetch('/api/health');
         if (response.ok) {
           const data = await response.json();
           if (data.status === 'ok') {
+            // Mark that we've checked and backend is online
+            sessionStorage.setItem(healthCheckKey, 'true');
             setBackendStatus('online');
             return;
           }

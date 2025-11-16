@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { splitImageApi } = require('./api/imageProcessor.js');
-const { rateLimiter } = require('./api/rateLimiter.js');
+const { processingRateLimiter, healthCheckRateLimiter } = require('./api/rateLimiter.js');
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -65,7 +65,7 @@ const apiKeyAuth = (req, res, next) => {
 // --- API Routes ---
 
 // Health check endpoint - must be before other routes
-app.get('/api/health', rateLimiter, (req, res) => {
+app.get('/api/health', healthCheckRateLimiter, (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -74,7 +74,7 @@ app.get('/api/health', rateLimiter, (req, res) => {
 });
 
 // UI endpoint - uses API key from environment internally (no API key required from client)
-app.post('/api/ui/process', rateLimiter, async (req, res) => {
+app.post('/api/ui/process', processingRateLimiter, async (req, res) => {
   // Check if API key is configured (silent fail if not)
   if (!process.env.API_KEY) {
     console.error('API_KEY not configured - UI endpoint cannot function');
@@ -138,7 +138,8 @@ app.post('/api/ui/process', rateLimiter, async (req, res) => {
 });
 
 // Authenticated API endpoint (for programmatic use - requires API_KEY header)
-app.post('/api/v1/process', apiKeyAuth, async (req, res) => {
+// Rate limiting applied before API key auth so all requests are counted
+app.post('/api/v1/process', processingRateLimiter, apiKeyAuth, async (req, res) => {
   const { url, chunkHeight, resizeWidth } = req.body;
 
   // Input validation
@@ -247,8 +248,10 @@ app.get('*', (req, res) => {
 if (require.main === module) {
   app.listen(PORT, () => {
     console.log(`SplitStream server with UI and API listening on http://localhost:${PORT}`);
-    const RATE_LIMIT_MAX_REQUESTS = parseInt(process.env.RATE_LIMIT_PER_HOUR, 10) || 10;
-    console.log(`Rate limit: ${RATE_LIMIT_MAX_REQUESTS} requests per hour per IP`);
+    const PROCESSING_RATE_LIMIT = parseInt(process.env.RATE_LIMIT_PER_HOUR, 10) || 10;
+    const HEALTH_CHECK_RATE_LIMIT = parseInt(process.env.HEALTH_CHECK_RATE_LIMIT_PER_HOUR, 10) || 100;
+    console.log(`Processing rate limit: ${PROCESSING_RATE_LIMIT} requests per hour per IP`);
+    console.log(`Health check rate limit: ${HEALTH_CHECK_RATE_LIMIT} requests per hour per IP (separate counter)`);
   });
 }
 

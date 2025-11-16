@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const path = require('path');
 const { splitImageApi } = require('./imageProcessor.js');
-const { rateLimiter } = require('./rateLimiter.js');
+const { processingRateLimiter, healthCheckRateLimiter } = require('./rateLimiter.js');
 
 const app = express();
 
@@ -64,7 +64,7 @@ const apiKeyAuth = (req, res, next) => {
 // --- API Routes ---
 
 // Health check endpoint - must be before other routes
-app.get('/api/health', rateLimiter, (req, res) => {
+app.get('/api/health', healthCheckRateLimiter, (req, res) => {
   res.status(200).json({
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -73,7 +73,7 @@ app.get('/api/health', rateLimiter, (req, res) => {
 });
 
 // UI endpoint - uses API key from environment internally (no API key required from client)
-app.post('/api/ui/process', rateLimiter, async (req, res) => {
+app.post('/api/ui/process', processingRateLimiter, async (req, res) => {
   // Check if API key is configured (silent fail if not)
   if (!process.env.API_KEY) {
     console.error('API_KEY not configured - UI endpoint cannot function');
@@ -137,7 +137,8 @@ app.post('/api/ui/process', rateLimiter, async (req, res) => {
 });
 
 // Authenticated API endpoint (for programmatic use - requires API_KEY header)
-app.post('/api/v1/process', apiKeyAuth, async (req, res) => {
+// Rate limiting applied before API key auth so all requests are counted
+app.post('/api/v1/process', processingRateLimiter, apiKeyAuth, async (req, res) => {
   const { url, chunkHeight, resizeWidth } = req.body;
 
   // Input validation

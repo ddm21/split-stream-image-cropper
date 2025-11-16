@@ -86,7 +86,7 @@ UPSTASH_REDIS_REST_TOKEN=your-upstash-token
   - CORS restricted to: same-origin, localhost:3001, *.vercel.app, custom VERCEL_URL
   - JSON body parsing (10MB limit)
   - **Dual-mode rate limiting** (`api/rateLimiter.js`):
-    - **Localhost**: In-memory rate limiter (10 req/min/IP by default)
+    - **Localhost**: In-memory rate limiter (10 req/hr/IP by default)
     - **Vercel**: Redis-backed (Upstash) for persistence across serverless invocations
     - Uses X-Forwarded-For header for accurate IP detection
   - API key authentication for `/api/v1/process` endpoint
@@ -176,7 +176,7 @@ Future recommendations: WAF on Vercel, CSP headers if third-party scripts added,
 ## Common Issues and Solutions
 
 - **CORS errors on production**: Check `CORS_ORIGINS` in `server.js` includes your domain
-- **Rate limiting too strict**: Increase `RATE_LIMIT_PER_MINUTE` in `.env` (default: 10 req/min/IP)
+- **Rate limiting too strict**: Increase `RATE_LIMIT_PER_HOUR` in `.env` (default: 10 req/hr/IP)
 - **Large images timeout on Vercel**: Increase function timeout in `vercel.json` (currently 60s)
 - **Memory errors**: Jimp processes entire image in memory; resize large images before splitting or increase function memory
 - **Import map not loading React**: Verify CDN URLs in `index.html` (esm.sh, aistudiocdn.com) are accessible
