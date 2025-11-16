@@ -4,6 +4,8 @@ SplitStream is a high-performance image processing application built with React 
 
 ![SplitStream Banner](https://i.ibb.co/FbKTN9hL/demo.webp)
 
+[Example n8n Workflow to Use SplitStream API](https://gist.github.com/ddm21/20146e6d2db88cccaedfb0cbefe5b383)
+
 ## 🚀 Features
 
 - **Server-Side Processing**: All image processing happens on the server, eliminating CORS issues and supporting any image URL.
