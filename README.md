@@ -2,8 +2,6 @@
 
 SplitStream is a high-performance image processing application built with React and TypeScript. It allows users to split large images into vertical chunks of specific heights. All processing happens server-side, enabling support for any image URL without CORS restrictions.
 
-![SplitStream Banner](https://i.ibb.co/FbKTN9hL/demo.webp)
-
 [Example n8n Workflow to Use SplitStream API](https://gist.github.com/ddm21/20146e6d2db88cccaedfb0cbefe5b383)
 
 ## 🚀 Features
